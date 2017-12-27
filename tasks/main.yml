@@ -1,0 +1,22 @@
+---
+- name: Create log directory
+  file: >
+      dest={{ log_dir }}
+      mode=2775
+      owner={{ log_dir_owner }}
+      group={{ log_group }}
+      state=directory
+
+- name: Copy Papertrail PEM file
+  copy: src=papertrail-bundle.pem dest=/etc/papertrail-bundle.pem owner=root group=root mode=0644
+  register: rsyslogconfig
+  when: export_syslog == "yes"
+
+- name: Copy Papertrail configuration file
+  template: src=99-papertrail.conf.j2 dest=/etc/rsyslog.d/99-papertrail.conf owner=root group=root mode=0644
+  register: rsyslogconfig
+  when: export_syslog == "yes"
+
+- name: Restart Rsyslog
+  command: service rsyslog restart
+  when: rsyslogconfig.changed
